@@ -1,0 +1,28 @@
+# Gradle
+.gradle/
+build/
+
+# Local config (SDK path, etc.)
+local.properties
+
+# Kotlin (cache)
+.kotlin/
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+
+# Android Studio generated
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+output-metadata.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Keystore
+*.jks
+*.keystore
