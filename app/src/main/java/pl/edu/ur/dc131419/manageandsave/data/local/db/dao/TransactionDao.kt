@@ -9,6 +9,8 @@ import pl.edu.ur.dc131419.manageandsave.data.local.db.entity.TxType
 import pl.edu.ur.dc131419.manageandsave.data.local.db.entity.TransactionEntity
 import java.util.UUID
 import androidx.room.Upsert
+import pl.edu.ur.dc131419.manageandsave.data.local.db.entity.EnvelopeEntity
+
 @Dao
 interface TransactionDao {
     @Upsert
@@ -72,6 +74,23 @@ interface TransactionDao {
   ORDER BY dateMillis DESC
 """)
     fun observeTransactionsByType(type: TxType, start: Long, end: Long): Flow<List<TransactionEntity>>
+
+    @Query("""
+  SELECT 
+        COALESCE(SUM(CASE WHEN type = 'INCOME' THEN amount ELSE 0 END), 0)
+      - COALESCE(SUM(CASE WHEN type = 'EXPENSE' THEN amount ELSE 0 END), 0) 
+    FROM transactions
+""")
+    fun observeglobalBalance(): Flow<Double>
+
+    @Query("""
+    SELECT COALESCE(SUM(t.amount), 0)
+    FROM transactions t
+    INNER JOIN envelopes e ON e.id = t.envelopeId
+    WHERE t.type = 'EXPENSE'
+      AND e.isSavings = 1
+""")
+    fun observeTotalSavings(): Flow<Double>
 
 
 }

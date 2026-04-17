@@ -12,4 +12,5 @@ data class EnvelopeEntity(
     val color: String,
     val defaultLimit: Double,
     val isSavings: Boolean = false,
+    val plannedAmount: Double = 0.0,
 )

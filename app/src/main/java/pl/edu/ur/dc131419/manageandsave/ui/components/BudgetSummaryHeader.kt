@@ -44,17 +44,25 @@ import java.util.Date
 @Composable
 fun BudgetSummaryHeader(
     currentDate: Date,
-    income: Double,
-    totalBudget: Double,
-    totalSpent: Double,
-    balance: Double,
+
+    totalBudget: Double,      // GLOBAL: globalBalance + totalSavings
+    totalSavings: Double,     // GLOBAL: suma oszczędności (koperta savings)
+
+    monthIncome: Double,      // MIESIĄC
+    monthSpent: Double,       // MIESIĄC: expenses bez savings (u Ciebie observeExpensesForMonth)
+    monthSavings: Double,     // MIESIĄC: savings (u Ciebie observeSavingsForMonth)
+    monthPlanned: Double,     // MIESIĄC: suma defaultLimit (alokacja)
+
     onPrevMonth: () -> Unit,
     onNextMonth: () -> Unit,
     onAddIncomeClick: () -> Unit,
     onSettingsClick: () -> Unit = {}
-) {
-    val remaining = totalBudget - totalSpent
-    val progress = if (totalBudget > 0) (totalSpent / totalBudget).coerceIn(0.0, 1.0) else 0.0
+){
+    val monthBalance = monthIncome - monthSpent - monthSavings
+    val monthToAllocate = monthIncome - monthPlanned
+    val monthProgressBase = monthPlanned.coerceAtLeast(0.0)
+    val monthProgress = if (monthProgressBase > 0) ((monthSpent + monthSavings) / monthProgressBase).coerceIn(0.0, 1.0) else 0.0
+
     val currentMonth = DateFormat.format("LLLL yyyy", currentDate).toString()
 
     val headerBg = MaterialTheme.colorScheme.primary
@@ -68,6 +76,8 @@ fun BudgetSummaryHeader(
     ) {
         Column {
             //  PIERWSZY WIERSZ: MENU + „Mój Budżet" + PRZYCHÓD
+
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -115,6 +125,22 @@ fun BudgetSummaryHeader(
 
             Spacer(Modifier.height(12.dp))
 
+            // GLOBAL: ponad miesiącem
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = headerContent.copy(alpha = 0.14f),
+                contentColor = headerContent,
+                tonalElevation = 0.dp,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    SummaryRow("Łączny budżet", totalBudget)
+                    SummaryRow("Oszczędności", totalSavings)
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -144,10 +170,11 @@ fun BudgetSummaryHeader(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(Modifier.padding(16.dp)) {
-                    SummaryRow("Przychód", income)
-                    SummaryRow("Całkowity budżet", totalBudget)
-                    SummaryRow("Wydano", totalSpent)
-                    SummaryRow("Bilans", balance)
+                    SummaryRow("Przychód (miesiąc)", monthIncome)
+                    SummaryRow("Zaplanowano", monthPlanned)
+                    SummaryRow("Nadwyżka / niedobór planu", monthToAllocate)
+                    SummaryRow("Wydano", monthSpent + monthSavings)
+                    SummaryRow("Bilans (miesiąc)", monthBalance)
 
                     Spacer(Modifier.height(8.dp))
 
@@ -161,13 +188,10 @@ fun BudgetSummaryHeader(
                         Box(
                             modifier = Modifier
                                 .fillMaxHeight()
-                                .fillMaxWidth(progress.toFloat())
+                                .fillMaxWidth(monthProgress.toFloat())
                                 .background(headerContent)
                         )
                     }
-
-                    Spacer(Modifier.height(8.dp))
-                    SummaryRow("Pozostało", remaining)
                 }
             }
         }

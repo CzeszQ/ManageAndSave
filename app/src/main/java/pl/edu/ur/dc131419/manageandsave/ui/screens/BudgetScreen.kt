@@ -65,7 +65,19 @@ import java.util.UUID
 fun BudgetScreen(viewModel: DashboardViewModel, settingsViewModel: SettingsViewModel) {
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val balance = uiState.balance
+
+    // GLOBAL
+    val totalBudget = uiState.totalBudget          // globalBalance + totalSavings
+    val totalSavings = uiState.totalSavings        // suma oszczędności (koperta savings)
+
+// MIESIĄC
+    val income = uiState.monthIncome
+    val planned = uiState.monthPlanned             // plan/alokacja = suma defaultLimit
+    val spent = uiState.monthExpenses + uiState.monthSavings
+    val balance = uiState.monthBalance
+    val toAllocate = uiState.monthToAllocate
+    val monthSpent = uiState.monthExpenses   // tylko e.isSavings=0
+    val monthSavings = uiState.monthSavings
 
     var currentDate by remember { mutableStateOf(Date()) }
     var viewMode by remember { mutableStateOf(ViewMode.LIST) }
@@ -87,9 +99,7 @@ fun BudgetScreen(viewModel: DashboardViewModel, settingsViewModel: SettingsViewM
     var showIncomeHistory by remember { mutableStateOf(false) }
 
     val currentMonthLabel = DateFormat.format("LLLL yyyy", currentDate).toString()
-    val income = uiState.income
-    val totalBudget = uiState.planned
-    val totalSpent = uiState.expenses + uiState.savings
+
 
     var showSettings by remember { mutableStateOf(false) }
     // ustawienia wibracje
@@ -192,13 +202,15 @@ fun BudgetScreen(viewModel: DashboardViewModel, settingsViewModel: SettingsViewM
         ) {
             BudgetSummaryHeader(
                 currentDate = currentDate,
-                income = income,
-                totalBudget = totalBudget,
-                totalSpent = totalSpent,
-                balance = balance,
+                totalBudget = uiState.totalBudget,
+                totalSavings = uiState.totalSavings,
+                monthIncome = uiState.monthIncome,
+                monthSpent = monthSpent,
+                monthSavings = monthSavings,
+                monthPlanned = uiState.monthPlanned,
                 onPrevMonth = { previousMonth() },
                 onNextMonth = { nextMonth() },
-                onAddIncomeClick = { isIncomeDialogOpen = true;  },
+                onAddIncomeClick = { isIncomeDialogOpen = true },
                 onSettingsClick = { showSettings = true; hapticTap() }
             )
 

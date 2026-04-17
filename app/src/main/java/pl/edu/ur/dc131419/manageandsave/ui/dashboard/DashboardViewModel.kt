@@ -81,20 +81,66 @@ class DashboardViewModel @Inject constructor(
             repo.deleteTransaction(transactionId)
         }
     }
+    private data class TotalsA(
+        val globalBalance: Double,
+        val income: Double,
+        val expenses: Double,
+        val monthSavings: Double,
+        val planned: Double
+    )
+
+    private data class Totals(
+        val globalBalance: Double,
+        val totalSavings: Double,
+        val monthIncome: Double,
+        val monthExpenses: Double,
+        val monthSavings: Double,
+        val monthPlanned: Double
+    )
 
     val uiState: StateFlow<DashboardUiState> =
         monthRange.flatMapLatest { range ->
             val start = range.start
             val end = range.end
-            combine(
+
+            val totalsAFlow: Flow<TotalsA> = combine(
+                repo.observeGlobalBalance(),
                 repo.observeIncome(start, end),
                 repo.observeExpenses(start, end),
                 repo.observeSavings(start, end),
-                repo.observePlannedAllocation(),
-                repo.observeEnvelopes()
-            ) { income, expenses, savings, planned, envelopes ->
-                DashboardUiState(income, expenses, savings, planned, envelopes)
+                repo.observePlannedAllocation()
+            ) { globalBalance, income, expenses, monthSavings, planned ->
+                TotalsA(globalBalance, income, expenses, monthSavings, planned)
+            }
+
+            val totalsFlow: Flow<Totals> = combine(
+                totalsAFlow,
+                repo.observeTotalSavings()
+            ) { a, totalSavings ->
+                Totals(
+                    globalBalance = a.globalBalance,
+                    totalSavings = totalSavings,
+                    monthIncome = a.income,
+                    monthExpenses = a.expenses,
+                    monthSavings = a.monthSavings,
+                    monthPlanned = a.planned
+                )
+            }
+
+            combine(totalsFlow, repo.observeEnvelopes()) { totals, envelopes ->
+                DashboardUiState(
+                    globalBalance = totals.globalBalance,
+                    totalSavings = totals.totalSavings,
+                    monthIncome = totals.monthIncome,
+                    monthExpenses = totals.monthExpenses,
+                    monthSavings = totals.monthSavings,
+                    monthPlanned = totals.monthPlanned,
+                    envelopes = envelopes
+                )
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState())
+
+
+
 }
 

@@ -12,8 +12,8 @@ class BudgetRepository(
     private val envelopeDao: EnvelopeDao,
     private val transactionDao: TransactionDao
 ) {
-    fun observeEnvelopes() = envelopeDao.observeEnvelopes()
 
+    fun observeGlobalBalance(): Flow<Double> = transactionDao.observeglobalBalance()
     fun observePlannedAllocation(): Flow<Double> =
         envelopeDao.observePlannedAllocation()
 
@@ -26,6 +26,9 @@ class BudgetRepository(
     fun observeSavings(start: Long, end: Long): Flow<Double> =
         transactionDao.observeSavingsForMonth(start, end)
 
+    fun observeTotalSavings(): Flow<Double> =
+        transactionDao.observeTotalSavings()
+
     suspend fun addTransaction(tx: TransactionEntity) {
         transactionDao.upsert(tx)
     }
@@ -33,9 +36,6 @@ class BudgetRepository(
         transactionDao.deleteTransaction(transactionId)
     }
 
-    fun observeSpentForEnvelope(envelopeId: UUID, start: Long, end: Long): Flow<Double> {
-        return transactionDao.observeSpentForEnvelopeMonth(envelopeId, start, end)
-    }
     fun observeTransactionsByType(type: TxType, start: Long, end: Long)
             : Flow<List<TransactionEntity>> =
         transactionDao.observeTransactionsByType(type, start, end)
@@ -44,6 +44,10 @@ class BudgetRepository(
         return transactionDao.observeTransactionsForEnvelope(envelopeId, start, end)
     }
 
+    fun observeSpentForEnvelope(envelopeId: UUID, start: Long, end: Long): Flow<Double> {
+        return transactionDao.observeSpentForEnvelopeMonth(envelopeId, start, end)
+    }
+    fun observeEnvelopes() = envelopeDao.observeEnvelopes()
     suspend fun addEnvelope(envelope: EnvelopeEntity) {
         envelopeDao.upsert(envelope)
     }
@@ -51,8 +55,6 @@ class BudgetRepository(
     suspend fun deleteEnvelope(envelopeId: UUID) {
         envelopeDao.deleteByIdIfNotSavings(envelopeId)
     }
-
-
 
     suspend fun ensureSavingsEnvelope() {
         if (envelopeDao.getSavingsEnvelopeOrNull() == null) {
